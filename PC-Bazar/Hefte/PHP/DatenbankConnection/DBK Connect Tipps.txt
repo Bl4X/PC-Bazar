@@ -1,0 +1,58 @@
+#Innerhalb der Gänsefüßchen = Code/Script               #Für eine Verbindung muss Apache und PHP auf der selben Maschine installiert sein
+
+
+// Datenbank erstellen        - Standart Connection mit "oci_connect()"   <>    "$c = oci_connect($username, $password, $dbname);"
+                                                                                                                 
+   - Für eine totale Unabhängige Connection mit "oci_new_connect()"   <>    "$c = oci_new_connect($username, $password, $dbname);"
+
+   - Eine Persisten(andauernde) Connection mit "oci_pconnect()"   <>    "$c = oci_pconnect($username, $password, $dbname);"
+
+Depending on your network configuration, you may need to use the equivalent IP address:
+$c = oci_connect('hr', 'welcome', '127.0.0.1/XE');
+
+Für eine einfache Verbindung
+[//]host_name[:port][/service_name]
+
+// Passwort wird in 7 Tagen ablaufen Stand: 01.03.2017
+Beispiel ConnectionScript:
+<?php
+$c = oci_pconnect("hr", "welcome", "localhost/XE");
+if (!$c) {
+$e = oci_error();
+trigger_error('Could not connect to database: '. $e['message'],E_USER_ERROR);
+}
+$s = oci_parse($c, "select city from locations order by city");
+if (!$s) {
+$e = oci_error($c);
+trigger_error('Could not parse statement: '. $e['message'], E_USER_ERROR);
+}
+$r = oci_execute($s);
+if (!$r) {
+$e = oci_error($s);
+trigger_error('Could not execute statement: '. $e['message'], E_USER_ERROR);
+}
+echo "<table border='1'>\n";
+$ncols = oci_num_fields($s);
+echo "<tr>\n";
+for ($i = 1; $i <= $ncols; ++$i) {
+$colname = oci_field_name($s, $i);
+}
+echo " <th><b>".htmlentities($colname, ENT_QUOTES)."</b></th>\n";
+}
+echo "</tr>\n";
+while (($row = oci_fetch_array($s, OCI_ASSOC+OCI_RETURN_NULLS)) != false) {
+echo "<tr>\n";
+foreach ($row as $item) {
+echo " <td>".($item!==null?htmlentities($item,
+ENT_QUOTES):"&nbsp;")."</td>\n";
+}
+echo "</tr>\n";
+}
+echo "</table>\n";
+?>
+
+
+// Am ende des Scripts kann man geöffnete Connections die mit
+"oci_connect" oder "oci_new_connect()" geöffnet wurden mit 
+"oci_close($c)" automatisch schlißen  ( alle "uncommited" Daten werden dabei glöscht")
+
